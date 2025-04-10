@@ -10,6 +10,7 @@ const LEVENSHTEIN_THRESHOLD = 0.25;
 var adminWindow;
 var playerThumbnailsIsotope;
 var advancedMode = false;
+var onlyTitleMode = false;
 var nbPlayers = 0;
 var nbTracks = 0;
 var nbScreens = 1;
@@ -128,6 +129,7 @@ async function loadPlaylistThumbnail(playlist) {
       if (playlist.title) {
         data.title = playlist.title;
       }
+      data.titleOnly = playlist.titleOnly;
       playlists[playlist.id] = data;
       const nbTracks = data.tracks.data.filter((track) => !!track.preview).length;
       let playlistTitle = data.title;
@@ -189,6 +191,11 @@ async function prepareStartGame() {
 
     jQuery(".homeScreen").hide();
     jQuery(".gameScreen").show();
+    if (onlyTitleMode) {
+      jQuery(".trackContentIconArtist").hide();
+    } else {
+      jQuery(".trackContentIconArtist").show();
+    }
   
     playerBlocksInterval = setInterval(() => { refreshPlayerBlocksProgressBar(); }, 100);
 
@@ -270,12 +277,24 @@ function computePlayerTimes() {
   return playerTimes;
 }
 
-function loadTracks() {
+async function loadTracks() {
   var allTracks = [];
+  var titleOnly = true;
+  var totalNbTracks = 0;
   playlistIds.forEach(playlistId => {
     const playlist = playlists[playlistId];
+    titleOnly = titleOnly && playlist.titleOnly;
     const playlistTracks = playlist.tracks.data.filter((track) => !!track.preview);
-    playlistTracks.forEach(track => {
+    totalNbTracks += playlistTracks.length;
+    // Use the same number of tracks in each selected playlist
+    const randomTracks = [];
+    const playlistTracksLength = playlistTracks.length;
+    for (i = 0; i < nbTracks && i < playlistTracksLength; i++) {
+      const j = Math.floor(Math.random() * playlistTracks.length);
+      randomTracks.push(playlistTracks[j]);
+      playlistTracks.splice(j, 1);
+    }
+    randomTracks.forEach(track => {
       const existingTrack = allTracks.find(trackTmp => trackTmp.title_short == track.title_short && trackTmp.artist.id == track.artist.id);
       const generationArtistName = track.artist.name.startsWith("Generation");
       const addTrack = !existingTrack && !generationArtistName;
@@ -292,8 +311,10 @@ function loadTracks() {
     });
   });
 
-  const divider = allTracks.length < 1000 ? 10 : 100;
-  jQuery('#homeScreenStepNbTracks').html("Prêts à jouer avec plus de " + (Math.round(allTracks.length / divider) * divider) + " chansons ?!?");
+  onlyTitleMode = titleOnly;
+
+  const divider = totalNbTracks < 1000 ? 10 : 100;
+  jQuery('#homeScreenStepNbTracks').html("Prêts à jouer avec plus de " + (Math.floor(totalNbTracks / divider) * divider) + " chansons ?!?");
 
   tracks = [];
   for (i = 0; i < nbTracks; i++) {
@@ -301,6 +322,23 @@ function loadTracks() {
     tracks.push(allTracks[j]);
     allTracks.splice(j, 1);
   }
+
+  if (onlyTitleMode) {
+    const trackTitles = await jQuery.ajax({
+      type : "GET",
+      data: "ids=" + tracks.map((track) => track.id).join(","),
+      dataType: "json",
+      url : "getTrackTitles.php"
+    });
+  
+    trackTitles.forEach(trackTitle => {
+      const track = tracks.find((trackTmp) => trackTmp.id == trackTitle.track_id);
+      track.title_fr = trackTitle.title_fr;
+      track.title_es = trackTitle.title_es;
+      track.title_en = trackTitle.title_en;
+    });
+  }
+
   createTrackList();
 }
 
@@ -364,7 +402,15 @@ async function loadTrack(trackId) {
     url : "loadTrack.php"
   });
   const track = tracks.find(track => trackId == track.id);
+  const title_short = track.title_short;
+  const title_fr = track.title_fr;
+  const title_es = track.title_es;
+  const title_en = track.title_en;
   Object.assign(track, detailedTrack);
+  track.title_short = title_short;
+  track.title_fr = title_fr;
+  track.title_es = title_es;
+  track.title_en = title_en;
   return track;
 }
 
@@ -399,7 +445,8 @@ function nextTrack() {
   if (playedTracks.length < nbTracks) {
     playNextTrack();
   } else {
-    endGame();
+    // TODO: timeout only if track not found
+    setTimeout("endGame()", 2000);
   }
 }
 
@@ -420,8 +467,9 @@ function refreshTrackList() {
     if (track.playerTitleAnsweredPosition) {
       jQuery('#trackListTitleBullet' + track.id).addClass("playerAnswer" + track.playerTitleAnsweredPosition);
     }
-    if (track.playerArtistAnsweredPosition) {
-      jQuery('#trackListArtistBullet' + track.id).addClass("playerAnswer" + track.playerArtistAnsweredPosition);
+    if (track.playerArtistAnsweredPosition || (onlyTitleMode && track.playerTitleAnsweredPosition)) {
+      jQuery('#trackListArtistBullet' + track.id).addClass("playerAnswer" +
+        (track.playerArtistAnsweredPosition ? track.playerArtistAnsweredPosition : track.playerTitleAnsweredPosition));
     }
     if (track.playing) {
       jQuery('#trackListTitleBullet' + track.id).addClass("animate__infinite").addClass("animate__animated").addClass("animate__heartBeat").addClass("playing");
@@ -443,7 +491,7 @@ function displayCurrentTrackContent() {
   currentTrack.played = true;
   const trackTitle = getTrackTitle(currentTrack);
   const trackArtists = getTrackArtists(currentTrack);
-  jQuery('.trackContentText').html(trackTitle + " (" + trackArtists.join(' / ') + ")<br/>" +
+  jQuery('.trackContentText').html(trackTitle + (onlyTitleMode ? "" : " (" + trackArtists.join(' / ') + ")") + "<br/>" +
     (playlistIds.length > 1 && advancedMode ? "<span style='font-size: 0.5em'>Playlist " + currentTrack.playlistTitle + "</span>" : ""));
   jQuery('.trackContentCover').css("background-image", "url('" + currentTrack.album.cover_medium + "')");
   jQuery('#equalizerWrapper').hide();
@@ -490,16 +538,11 @@ function playerAnswer(playerPosition) {
   const now = new Date().getTime();
   const audioRatio = (audio.currentTime / audio.duration);
 
-  console.log("*** playerAnswer " + new Date().getTime() + " " + playerPosition);
-
   if (!currentTrackFound() &&
       audioRatio < 0.99 &&
       playerAnsweringPosition <= 0 &&
       playerAttempts[playerPosition - 1] < PLAYER_MAX_ATTEMPTS &&
       (now - playerBlockTimes[playerPosition - 1] > PLAYER_BLOCK_DELAY * 1000)) {
-
-    console.log("*** playerAnswer set playerAnsweringPosition" + new Date().getTime() + " " + playerPosition);
-
     playerAnsweringPosition = playerPosition;
     playerAnsweringTime = now;
     playerAttempts[playerPosition - 1]++;
@@ -530,7 +573,7 @@ function playerAnswer(playerPosition) {
 
 async function checkPlayerTextAnswer() {
   // Not allowed to validate during the first 2 seconds (to avoid validation issues when buzzing)
-  if (playerAnsweringTime && (new Date().getTime() - playerAnsweringTime < 2000)) {
+  if (playerAnsweringTime && (new Date().getTime() - playerAnsweringTime < 1500)) {
     return false;
   }
 
@@ -540,7 +583,7 @@ async function checkPlayerTextAnswer() {
     const answer = playerTextAnswer.val();
   
     const titleDistance = computeTitleScore(answer, currentTrack);
-    const artistDistance = computeArtistScore(answer, currentTrack);
+    const artistDistance = onlyTitleMode ? 10 : computeArtistScore(answer, currentTrack);
   
     const titleFound = (titleDistance <= LEVENSHTEIN_THRESHOLD);
     const artistFound = (artistDistance <= LEVENSHTEIN_THRESHOLD);
@@ -560,7 +603,7 @@ async function checkPlayerTextAnswer() {
 }
 
 function currentTrackFound() {
-  return currentTrack && currentTrack.playerTitleAnsweredPosition > 0 && currentTrack.playerArtistAnsweredPosition > 0;
+  return currentTrack && currentTrack.playerTitleAnsweredPosition > 0 && (onlyTitleMode || currentTrack.playerArtistAnsweredPosition > 0);
 }
 
 async function refreshPlayerAnsweringProgressBar() {
@@ -650,7 +693,7 @@ async function goodAnswer(title, artist) {
         currentTrack.playerTitleAnsweredTime = audio.currentTime;
         jQuery('.trackContentIconTitle').addClass('found').addClass('animate__shakeY');
       }
-      if (artist && currentTrack.playerArtistAnsweredPosition <= 0) {
+      if (!onlyTitleMode && artist && currentTrack.playerArtistAnsweredPosition <= 0) {
         currentTrack.playerArtistAnsweredPosition = playerAnsweringPosition;
         currentTrack.playerArtistAnsweredTime = audio.currentTime;
         jQuery('.trackContentIconArtist').addClass('found').addClass('animate__shakeY');

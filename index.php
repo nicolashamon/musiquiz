@@ -1,23 +1,13 @@
 <!--
-  - bug sur buzzers en fin de temps de réponse (à tester)
-  - revoir les playlists
-  - liste des chansons écoutées sur la droite
+  - images custo sur films
   - stats de fin de partie
+  - liste des chansons écoutées sur la droite
   - catégoriser les playlists
-  - playlist de films
-  - admin à améliorer
-  - musique d'ambiance avant le début de la partie
   - API Spotify
-  - réponses avec un micro
-  - volume des chansons homogène
-  - charger les extraits musicaux en avance
-  - afficher les infos floutées au départ puis les révéler en fonction des réponses
-  - afficher la première lettre de la chanson / artiste au bout de n secondes
 -->
 <?php
-  function endsWith($hay, $needle) {
-    return substr($hay, strlen($hay) - strlen($needle), strlen($needle)) == $needle;
-  }
+require_once __DIR__ . "/classes/Utils.php";
+musiquizSessionStart();
 ?>
 
 <html>
@@ -31,6 +21,7 @@
     <link rel="stylesheet" type="text/css" href="/fontawesome-free-6.7.2/css/fontawesome.css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="/fontawesome-free-6.7.2/css/brands.css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="/fontawesome-free-6.7.2/css/solid.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="/fontawesome-free-6.7.2/css/regular.css" rel="stylesheet" />
     <link rel="shortcut icon" href="./images/icon.png" />
     <script src="/scripts/jquery-3.7.1.min.js"></script>
     <script src="/scripts/jquery-ui-1.14.1.min.js"></script>
@@ -131,8 +122,14 @@
             <div class="trackContentText"></div>
             <div class="trackContentCover">
               <div class="trackContentIcons">
-                <div class="trackContentIcon trackContentIconTitle animate__animated"><span class="fa-solid fa-music"></span><span>Titre</span></div>
-                <div class="trackContentIcon trackContentIconArtist animate__animated"><span class="fa-solid fa-microphone"></span><span>Artiste</span></div>
+                <div class="trackContentIcon trackContentIconTitle animate__animated">
+                  <span class="fa-solid fa-music"></span>
+                  <span>Titre</span>
+                </div>
+                <div class="trackContentIcon trackContentIconArtist animate__animated">
+                  <span class="fa-solid fa-microphone"></span>
+                  <span>Artiste</span>
+                </div>
               </div>
               <div id="equalizerWrapper">
                 <div id="equalizer">
@@ -180,27 +177,7 @@
 
   </body>
   <script>
-    loadPlaylistThumbnails([
-      { id: '13628118681', selected: false }, // Playlist Shara
-      { id: '13668120261', selected: false }, // Playlist Sacha
-      { id: '6554940184', selected: false }, // Made in Spain
-      
-      { id: '13680116321', selected: true }, // MusiQuiz
-      { id: '9382099262', selected: true }, // Blind test 1970-2020
-      { id: '13200756823', selected: true }, // 2024 Hits France
-      { id: '7273901224', selected: true, title: "Best of 2000 > 2010" }, // Années 2000
-      { id: '8979905582', selected: true }, // Hits cultes
-      { id: '7273887124', selected: true, title: "Best of 1990 > 2000" }, // Années 90
-//      { id: '7273969244', selected: true, title: "Best of années 2000 Français" }, // Best of années 2000 français
-      { id: '3875687602', selected: true }, // Top 50 80 90 2000
-      { id: '5220852384', selected: true, title: "100% hits internationaux" }, // 100% hits internationaux
-      { id: '5242980142', selected: true }, // Hits internationaux
-      { id: '11506591244', selected: true }, // Hits internationaux années 80
-      { id: '53362031', selected: true}, // Les titres du moments
-      { id: '1363560485', selected: true}, // Deezer hits
-      { id: '9633748382', selected: true}, // Let's sing 2022
-      
-    ]);
+    loadPlaylistThumbnails(defaultPlaylists);
   </script>
     <script>
       window.addEventListener('beforeunload', (event) => {

@@ -1,0 +1,6 @@
+RewriteEngine On
+Redirect /PHP/ /
+
+RedirectMatch 404 /\.git
+
+RewriteRule "editFilms" "adminFilms.php"

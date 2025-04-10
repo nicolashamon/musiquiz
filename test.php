@@ -31,6 +31,7 @@
   </body>
   <script>
     let result = "";
+    const t1 = new Date().getTime();
     result += dumpLevenshteinDistance("texi", "y", ["texit"], false, true);
     result += dumpLevenshteinDistance("inxs", "Devil inside", ["INXS"], false, true);
     result += dumpLevenshteinDistance("ntm", "La fièvre", ["N.T.M."], false, true);
@@ -51,6 +52,9 @@
     result += dumpLevenshteinDistance("Slimane", "Beaux", ["Vitaa feat Slimane"], false, true);
     result += dumpLevenshteinDistance("Vitaa", "Beaux", ["Vitaa feat. Slimane"], false, true);
     result += dumpLevenshteinDistance("Simon and garfunkel", "The sound of silence", ["Simon & garfunkel"], false, true);
+    result += dumpLevenshteinDistance("Pink", "Family portrait", ["P!nk"], false, true);
+    const t2 = new Date().getTime();
+    result += "<div>Temps total : " + (t2 - t1) + " ms</div>";
     jQuery("#trackList").html(result);
 
     function dumpLevenshteinDistance(answer, title, artistNames, titleOk, artistOk) {

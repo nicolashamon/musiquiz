@@ -2,6 +2,26 @@ const playerBuzzerKeyCodes = ['&', '"', '(', '_'];
 const playerKeyboardKeyCodes = []; // ['w', 'v', 'j', 'p']
 const playerPadKeyCodes = []; // ['1', '2', '3', '4']
 
+const defaultPlaylists = [
+  { id: '13628118681', selected: false }, // Playlist Shara
+  { id: '13668120261', selected: false }, // Playlist Sacha
+  { id: '1106933581', selected: false }, // Playlist Nico
+  { id: '13691114761', selected: false, titleOnly: true }, // MusiQuiz films
+  { id: '6554940184', selected: false }, // Made in Spain
+  { id: '13680116321', selected: true }, // MusiQuiz
+  { id: '13200756823', selected: false }, // 2024 Hits France
+  { id: '7273901224', selected: false, title: "Best of 2000 > 2010" }, // Années 2000
+  { id: '8979905582', selected: false }, // Hits cultes
+  { id: '7273887124', selected: false, title: "Best of 1990 > 2000" }, // Années 90
+//      { id: '7273969244', selected: true, title: "Best of années 2000 Français" }, // Best of années 2000 français
+  { id: '5220852384', selected: false, title: "100% hits internationaux" }, // 100% hits internationaux
+  { id: '5242980142', selected: false }, // Hits internationaux
+  { id: '11506591244', selected: false }, // Hits internationaux années 80
+  { id: '53362031', selected: false}, // Les titres du moments
+  { id: '1363560485', selected: false}, // Deezer hits
+  { id: '9633748382', selected: false}, // Let's sing 2022
+];
+
 var audioTimer, audioWrong, audioCorrect, audioEnd, audioBuzzers, audioApplause;
 var keydownAnswerBlocked = false;
 
@@ -9,7 +29,7 @@ function loadSounds() {
   audioTimer = new Audio("sounds/timer.wav");
   audioWrong = new Audio("sounds/wrong.wav");
   audioCorrect = new Audio("sounds/correct.wav");
-  audioEnd = new Audio("sounds/end.wav");
+  audioEnd = new Audio("sounds/end3.mp3");
   audioApplause = new Audio("sounds/applause2.wav");
   audioBuzzers = [
     new Audio("sounds/buzzer2.wav"),
@@ -42,7 +62,26 @@ function formatTime(time) {
 }
 
 function getTrackTitle(track) {
+  if (track.title_fr && track.title_fr != '') {
+    return track.title_fr;
+  } else if (track.title_en && track.title_en != '') {
+    return track.title_en;
+  }
   return track.title_short;
+}
+
+function getTrackTitles(track) {
+  const titles = [track.title_short];
+  if (track.title_fr && track.title_fr != '') {
+    titles.push(track.title_fr);
+  }
+  if (track.title_es && track.title_es != '') {
+    titles.push(track.title_es);
+  }
+  if (track.title_en && track.title_en != '') {
+    titles.push(track.title_en);
+  }
+  return titles;
 }
 
 function getTrackArtists(track) {
@@ -70,12 +109,17 @@ function getArtistNames(artistName) {
 }
 
 function computeTitleScore(answer, track) {
-  const title = getTrackTitle(track);
-  const score = computeScore(answer, title);
+  const titles = getTrackTitles(track);
+  let bestScore = 1;
+  titles.forEach(title => {
+    const score = computeScore(answer, title);
 
-  console.log(answer + " / " + title + " : " + score);
+    console.log(answer + " / " + title + " : " + score);
 
-  return score;
+    bestScore = Math.min(bestScore, score);
+  });
+
+  return bestScore;
 }
 
 function computeArtistScore(answer, track) {
@@ -133,6 +177,7 @@ function levenshteinDistance(s, t) {
 function cleanString(str) {
   return str.toLowerCase().trim().normalize("NFD")
     .replace(/[\u0300-\u036f\u2019]/g, "")
+    .replaceAll("p!nk", "pink")
     .replaceAll("&", "et")
     .replaceAll(" et ", "")
     .replaceAll(" and ", "")

@@ -477,13 +477,26 @@ a.button,button {
                 display: block;
                 align-items: center;
                 min-width: 120px;
+                position: relative;
+
+                .trackContentIconCheck {
+                  display: none;
+                  position: absolute;
+                  right: -37px;
+                  bottom: -20px;
+                  color: var(--musiquiz-main-blue-color);
+                }
 
                 &.found {
                   color: var(--musiquiz-main-blue-color);
                   border-color: var(--musiquiz-main-blue-color);
                   background-color: #ffffff;
+
+                  .trackContentIconCheck {
+                    display: block;
+                  }
                 }
-                .fa-solid {
+                .fa-solid:not(.trackContentIconCheck) {
                   margin-right: 10px;
                 }
               }
@@ -900,6 +913,108 @@ a.button,button {
     #dialogButtons {
       text-align: center;
     }
+  }
+}
+
+#keyboardHelp {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .keyboardHelpLegend {
+    margin: 10px 0;
+  }
+
+  .keyboardHelpTop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;  
+  }
+
+  .keyboardHelpCenter {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;  
+
+    .keyboardHelpLegend {
+      min-width: 70px;
+      text-align: center;
+    }
+  }
+
+  .keyboardHelpKey {
+    width: 50px;
+    height: 50px;;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: lightgray;
+    border: 1px solid gray;
+    border-radius: 8px;
+  }
+}
+
+#tracks-table {
+  td {
+    vertical-align: middle;
+    padding: 2px 4px;
+
+    .track-play {
+      color: var(--musiquiz-main-blue-color);
+    }
+
+    .track-cover {
+      width: 40px;
+      height: 40px;
+    }
+
+    .track-updated {
+      color: green;
+      display: none;
+    }
+  }
+
+  select {
+    border-radius: 6px;
+    padding: 5px;
+    border: 1px solid var(--musiquiz-main-blue-color);
+  }
+  
+  input {
+    border-radius: 6px;
+    padding: 6px;
+    border: 1px solid var(--musiquiz-main-blue-color);
+    width: 250px;
+
+    &.titleTranslation {
+      background-position: 4px center;
+      background-repeat: no-repeat;
+      background-size: 20px;
+      padding-left: 30px;
+    }
+
+    &.titleTranslationFr {
+      background-image: url('../images/flags/france-flag-png-large.png');
+    }
+
+    &.titleTranslationEs {
+      background-image: url('../images/flags/spain-flag-png-large.png');
+    }
+
+    &.titleTranslationEn {
+      background-image: url('../images/flags/united-states-of-america-flag-png-large.png');
+    }
+  }
+
+  .untouched {
+    background-color: lightpink;
   }
 }
 

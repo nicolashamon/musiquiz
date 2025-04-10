@@ -9,11 +9,6 @@ function refreshAdminTrackList() {
   if (gameWindow.nbScreens >= 2) {
     let html = "";
     let index = 0;
-    if (gameWindow.currentTrack) {
-      const trackTitle = getTrackTitle(gameWindow.currentTrack);
-      const trackArtists = getTrackArtists(gameWindow.currentTrack);
-      html += "<div>En cours : " + trackTitle + " (" + trackArtists.join(' / ') + ")</div>";
-    }
     gameWindow.tracks.forEach(track => {
       index++;
       const trackTitle = getTrackTitle(track);
