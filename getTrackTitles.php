@@ -9,9 +9,11 @@ $result = array();
 
 foreach ($track_ids as $track_id) {
   $track_translation = getObjectFromDB(Track_translation::class, "TRACK_ID=" . $track_id);
+  $track_cover = getTrackCover($track_id);
   if ($track_translation) {
     array_push($result, array(
       'track_id' => $track_id,
+      'cover' => $track_cover,
       'title_fr' => $track_translation->title_fr,
       'title_es' => $track_translation->title_es,
       'title_en' => $track_translation->title_en));

@@ -32,4 +32,12 @@ function endsWith($hay, $needle) {
   return substr($hay, strlen($hay) - strlen($needle), strlen($needle)) == $needle;
 }
 
+function getTrackCover($track_id) {
+  $image_path = 'images/tracks/' . $track_id . '.jpg';
+  if (file_exists($image_path)) {
+    return $image_path;
+  }
+  return NULL;
+}
+
 ?>

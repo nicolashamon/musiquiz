@@ -3,23 +3,31 @@ const playerKeyboardKeyCodes = []; // ['w', 'v', 'j', 'p']
 const playerPadKeyCodes = []; // ['1', '2', '3', '4']
 
 const defaultPlaylists = [
-  { id: '13628118681', selected: false }, // Playlist Shara
-  { id: '13668120261', selected: false }, // Playlist Sacha
-  { id: '1106933581', selected: false }, // Playlist Nico
-  { id: '13691114761', selected: false, titleOnly: true }, // MusiQuiz films
-  { id: '6554940184', selected: false }, // Made in Spain
-  { id: '13680116321', selected: true }, // MusiQuiz
-  { id: '13200756823', selected: false }, // 2024 Hits France
-  { id: '7273901224', selected: false, title: "Best of 2000 > 2010" }, // Années 2000
-  { id: '8979905582', selected: false }, // Hits cultes
-  { id: '7273887124', selected: false, title: "Best of 1990 > 2000" }, // Années 90
-//      { id: '7273969244', selected: true, title: "Best of années 2000 Français" }, // Best of années 2000 français
-  { id: '5220852384', selected: false, title: "100% hits internationaux" }, // 100% hits internationaux
-  { id: '5242980142', selected: false }, // Hits internationaux
-  { id: '11506591244', selected: false }, // Hits internationaux années 80
-  { id: '53362031', selected: false}, // Les titres du moments
-  { id: '1363560485', selected: false}, // Deezer hits
-  { id: '9633748382', selected: false}, // Let's sing 2022
+  { id: '13680116321', selected: true, group: "Sélection MusiQuiz" }, // MusiQuiz
+  { id: '13691114761', selected: true, group: "Sélection MusiQuiz", filmMode: true }, // MusiQuiz films
+  { id: '13750363061', selected: true, group: "Sélection MusiQuiz", filmMode: true }, // MusiQuiz dessins animés
+  { id: '13750382341', selected: true, group: "Sélection MusiQuiz", filmMode: true }, // MusiQuiz dessins animés TV
+  { id: '13750382761', selected: true, group: "Sélection MusiQuiz", filmMode: true }, // MusiQuiz séries TV
+  { id: '13750383261', selected: true, group: "Sélection MusiQuiz", filmMode: true }, // MusiQuiz émissions TV
+  
+  { id: '7273872044', selected: false, group: "Best of par décennie", title: "Best of 1980 > 1990" }, // Années 80
+  { id: '7273887124', selected: false, group: "Best of par décennie", title: "Best of 1990 > 2000" }, // Années 90
+  { id: '7273901224', selected: false, group: "Best of par décennie", title: "Best of 2000 > 2010" }, // Années 2000
+  { id: '7273914324', selected: false, group: "Best of par décennie", title: "Best of 2010 > 2020" }, // Années 2010
+  { id: '13200756823', selected: false, group: "Récents", title: "Hits 2024" }, // 2024 Hits France
+  { id: '53362031', selected: false, group: "Récents"}, // Les titres du moments
+  { id: '1109890291', selected: false, group: "Récents"}, // Top 100 France
+  
+  { id: '13628118681', selected: false, group: "Perso", title: "Playlist Sara" }, // Playlist Shara
+  { id: '13668120261', selected: false, group: "Perso", title: "Playlist Sacha" }, // Playlist Sacha
+  { id: '1106933581', selected: false, group: "Perso", title: "Playlist Nico" }, // Playlist Nico
+  // { id: '6554940184', selected: false }, // Made in Spain
+  // { id: '8979905582', selected: false }, // Hits cultes
+  // { id: '5220852384', selected: false, title: "100% hits internationaux" }, // 100% hits internationaux
+  // { id: '5242980142', selected: false }, // Hits internationaux
+  // { id: '11506591244', selected: false }, // Hits internationaux années 80
+  // { id: '1363560485', selected: false}, // Deezer hits
+  // { id: '9633748382', selected: false}, // Let's sing 2022
 ];
 
 var audioTimer, audioWrong, audioCorrect, audioEnd, audioBuzzers, audioApplause;
@@ -42,14 +50,17 @@ function loadSounds() {
   loadAudio(audioWrong);
   loadAudio(audioCorrect);
   loadAudio(audioEnd);
+  loadAudio(audioApplause);
   audioBuzzers.forEach(audioBuzzer => {
     loadAudio(audioBuzzer);
   });
 }
 
-function loadAudio(audio) {
+async function loadAudio(audio) {
   audio.volume = 0;
-  audio.play();
+  await audio.play();
+  await sleep((audio.duration * 1000) + 1000);
+  audio.volume = 1;
 }
 
 function sleep(ms) {

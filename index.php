@@ -1,8 +1,7 @@
 <!--
-  - images custo sur films
+  - bug des sons joués partiellement au premier chargement
   - stats de fin de partie
   - liste des chansons écoutées sur la droite
-  - catégoriser les playlists
   - API Spotify
 -->
 <?php
@@ -66,12 +65,17 @@ musiquizSessionStart();
         </div>
       </div>
       <div id='homeScreenStep4' class='homeScreenStep'>
+        <div>
+          <a href="javascript:setFilmMode(false)" id="filmModeButton1" class="button configButton filmModeButton selected">Musique</a>
+          <a href="javascript:setFilmMode(true)" id="filmModeButton2" class="button configButton filmModeButton">Films</a>
+        </div>
+        <div id="playlistMusicList" class="playlistList"></div>
+        <div id="playlistFilmList" class="playlistList" style="display: none"></div>
         <div style='margin: 10px'>
           <form onsubmit='return addPlayListUrl();'>
             <input type='text' id='playlistIdToAdd' name='playlistIdToAdd' placeholder='Numéro de playlist à ajouter' />
           </form>
         </div>
-        <div id="playlistList"></div>
         <div style='margin: 10px; text-align: center;'>
           <a href="javascript:validatePlaylistsSelection()" class="button configButton">Suivant</a>
         </div>

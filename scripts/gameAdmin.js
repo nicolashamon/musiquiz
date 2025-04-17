@@ -15,7 +15,7 @@ function refreshAdminTrackList() {
       const trackArtists = getTrackArtists(track);
       html += "\
         <div class='trackListItem " + (track.played ? 'played' : '') + " " + (track.playing ? 'playing' : '') + "'>" +
-          index + ". " + trackTitle + " (" + trackArtists.join(' / ') + ")\
+          index + ". " + trackTitle + (gameWindow.filmMode ? "" : " (" + trackArtists.join(' / ') + ")") + "\
         </div>";
     });
     jQuery('#trackList').html(html);

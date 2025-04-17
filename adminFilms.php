@@ -20,13 +20,18 @@
 
     $track_translations = getObjectsFromDB(Track_translation::class);
     foreach ($track_translations as $track_translation) {
-      echo "trackTranslations.push({ track_id: " . $track_translation->track_id .
-           ", type: \"" . $track_translation->type .
-           "\", title_fr: \"" . $track_translation->title_fr .
+      echo "trackTranslations[" . $track_translation->track_id . "] = { " .
+           "title_fr: \"" . $track_translation->title_fr .
            "\", title_es: \"" . $track_translation->title_es .
            "\", title_en: \"" . $track_translation->title_en .
-           "\", done: " . $track_translation->done . "});\n";
+           "\", done: " . $track_translation->done . " };\n";
+
+      $track_cover = getTrackCover($track_translation->track_id);
+      if ($track_cover) {
+        echo "trackImages[" . $track_translation->track_id . "] = { image: '" . $track_cover . "' };\n";
+      }
     }
+
     ?>
     </script>
   </head>

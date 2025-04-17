@@ -9,8 +9,8 @@ const LEVENSHTEIN_THRESHOLD = 0.25;
 
 var adminWindow;
 var playerThumbnailsIsotope;
-var advancedMode = false;
-var onlyTitleMode = false;
+var advancedMode = true;
+var filmMode = false;
 var nbPlayers = 0;
 var nbTracks = 0;
 var nbScreens = 1;
@@ -73,6 +73,20 @@ function setNbTracks(nbTracks) {
   }
 }
 
+function setFilmMode(filmMode) {
+  jQuery(".filmModeButton").removeClass("selected");
+  jQuery("#filmModeButton" + (filmMode ? '2' : '1')).addClass("selected");
+  window.filmMode = filmMode;
+  jQuery(".playlistList").hide();
+  if (filmMode) {
+    jQuery("#playlistFilmList").show();
+    jQuery("#playlistIdToAdd").hide();
+  } else {
+    jQuery("#playlistMusicList").show();
+    jQuery("#playlistIdToAdd").show();
+  }
+}
+
 function validatePlaylistsSelection() {
   if (playlistIds.length > 0) {
     loadTracks();
@@ -107,8 +121,22 @@ function selectNextAvatar(playerPosition) {
 
 async function loadPlaylistThumbnails(playlists) {
   const promises = [];
+  const otherGroupId = getGroupId(null, false);
+  const playlistGroups = [ otherGroupId ];
+  jQuery('.playlistList').html('');
+  playlists.forEach(playlist => {
+    const group = playlist.group;
+    const groupId = getGroupId(group, playlist.filmMode);
+    if (!playlistGroups.includes(groupId)) {
+      playlistGroups.push(groupId);
+      jQuery('#playlist' + (playlist.filmMode ? 'Film' : 'Music') + 'List').
+        append("<div class='playlistGroupWrapper' id='" + groupId + "'><div class='playlistGroupTitle'>" + group + "</div></div>");
+    }
+  });
+  jQuery('#playlistMusicList').append("<div class='playlistGroupWrapper' id='" + otherGroupId + "'><div class='playlistGroupTitle'>Autres</div></div>");
   playlists.forEach(playlist => {
     promises.push(loadPlaylistThumbnail(playlist));
+    jQuery('#' + getGroupId(playlist.group, playlist.filmMode)).append("<div id='playlistWrapper" + playlist.id + "'></div>");
   });
   jQuery.when.apply(jQuery, promises).then(function(data) {
     jQuery("#homeScreenStep0").fadeOut(300, function() {
@@ -117,6 +145,15 @@ async function loadPlaylistThumbnails(playlists) {
   }, function(err) {
     console.log("[loadPlaylistThumbnails error]", err);
   });
+}
+
+function getGroupId(group, filmMode) {
+  var result = group;
+  if (!result) {
+    result = "Autres";
+  }
+  result = result.replaceAll(' ', '');
+  return 'playlistGroupWrapper' + result + (filmMode ? 'Film' : 'Music');
 }
 
 async function loadPlaylistThumbnail(playlist) {
@@ -129,14 +166,14 @@ async function loadPlaylistThumbnail(playlist) {
       if (playlist.title) {
         data.title = playlist.title;
       }
-      data.titleOnly = playlist.titleOnly;
+      data.filmMode = playlist.filmMode;
       playlists[playlist.id] = data;
       const nbTracks = data.tracks.data.filter((track) => !!track.preview).length;
       let playlistTitle = data.title;
       if (playlistTitle.length > 40) {
         playlistTitle = playlistTitle.substring(0, 40) + '...';
       }
-      jQuery('#playlistList').prepend("\
+      jQuery('#playlistWrapper' + data.id).html("\
         <a href='javascript:selectPlaylist(\"" + data.id + "\")'>\
           <div id='playlistListItem" + data.id + "' class='playlistListItem'>\
             <div class='playlistListItemPicture'><img src='" + data.picture_medium + "'></div>\
@@ -157,6 +194,7 @@ async function loadPlaylistThumbnail(playlist) {
 
 function addPlayListUrl() {
   const playlistIdToAdd = jQuery("#playlistIdToAdd");
+  jQuery('#' + getGroupId(null, false)).append("<div id='playlistWrapper" + playlistIdToAdd.val() + "'></div>");
   loadPlaylistThumbnail({ id: playlistIdToAdd.val() });
   playlistIdToAdd.val('');
   return false;
@@ -191,7 +229,7 @@ async function prepareStartGame() {
 
     jQuery(".homeScreen").hide();
     jQuery(".gameScreen").show();
-    if (onlyTitleMode) {
+    if (filmMode) {
       jQuery(".trackContentIconArtist").hide();
     } else {
       jQuery(".trackContentIconArtist").show();
@@ -232,6 +270,7 @@ function startGame() {
 }
 
 function endGame() {
+  currentTrack = null;
   const playerPoints = computePlayerPoints();
   const playerTimes = computePlayerTimes();
   let winnerPosition = 0;
@@ -279,39 +318,45 @@ function computePlayerTimes() {
 
 async function loadTracks() {
   var allTracks = [];
-  var titleOnly = true;
   var totalNbTracks = 0;
+  const useSameNumber = !filmMode;
   playlistIds.forEach(playlistId => {
     const playlist = playlists[playlistId];
-    titleOnly = titleOnly && playlist.titleOnly;
-    const playlistTracks = playlist.tracks.data.filter((track) => !!track.preview);
-    totalNbTracks += playlistTracks.length;
-    // Use the same number of tracks in each selected playlist
-    const randomTracks = [];
-    const playlistTracksLength = playlistTracks.length;
-    for (i = 0; i < nbTracks && i < playlistTracksLength; i++) {
-      const j = Math.floor(Math.random() * playlistTracks.length);
-      randomTracks.push(playlistTracks[j]);
-      playlistTracks.splice(j, 1);
-    }
-    randomTracks.forEach(track => {
-      const existingTrack = allTracks.find(trackTmp => trackTmp.title_short == track.title_short && trackTmp.artist.id == track.artist.id);
-      const generationArtistName = track.artist.name.startsWith("Generation");
-      const addTrack = !existingTrack && !generationArtistName;
-      if (addTrack) {
-        track.played = false;
-        track.playing = false;
-        track.playerTitleAnsweredPosition = 0;
-        track.playerArtistAnsweredPosition = 0;
-        track.playerTitleAnsweredTime = 0;
-        track.playerArtistAnsweredTime = 0;
-        track.playlistTitle = playlist.title;
-        allTracks.push(track);
+    if (!!playlist.filmMode == !!filmMode) {
+      const playlistTracks = playlist.tracks.data.filter((track) => !!track.preview);
+      totalNbTracks += playlistTracks.length;
+      // Use the same number of tracks in each selected playlist
+      const randomTracks = [];
+      if (useSameNumber) {
+        const playlistTracksLength = playlistTracks.length;
+        for (i = 0; i < nbTracks && i < playlistTracksLength; i++) {
+          const j = Math.floor(Math.random() * playlistTracks.length);
+          randomTracks.push(playlistTracks[j]);
+          playlistTracks.splice(j, 1);
+        }  
+      } else {
+        playlistTracks.forEach(playlistTrack => {
+          randomTracks.push(playlistTrack);
+        });
       }
-    });
+      randomTracks.forEach(track => {
+        const existingTrack = allTracks.find(trackTmp => trackTmp.title_short == track.title_short && trackTmp.artist.id == track.artist.id);
+        const generationArtistName = track.artist.name.startsWith("Generation");
+        const addTrack = !existingTrack && !generationArtistName;
+        if (addTrack) {
+          track.played = false;
+          track.playing = false;
+          track.playerTitleAnsweredPosition = 0;
+          track.playerArtistAnsweredPosition = 0;
+          track.playerTitleAnsweredTime = 0;
+          track.playerArtistAnsweredTime = 0;
+          track.playlistTitle = playlist.title;
+          track.cover = track.album.cover_medium;
+          allTracks.push(track);
+        }
+      });  
+    }
   });
-
-  onlyTitleMode = titleOnly;
 
   const divider = totalNbTracks < 1000 ? 10 : 100;
   jQuery('#homeScreenStepNbTracks').html("Prêts à jouer avec plus de " + (Math.floor(totalNbTracks / divider) * divider) + " chansons ?!?");
@@ -323,7 +368,7 @@ async function loadTracks() {
     allTracks.splice(j, 1);
   }
 
-  if (onlyTitleMode) {
+  if (filmMode) {
     const trackTitles = await jQuery.ajax({
       type : "GET",
       data: "ids=" + tracks.map((track) => track.id).join(","),
@@ -333,11 +378,16 @@ async function loadTracks() {
   
     trackTitles.forEach(trackTitle => {
       const track = tracks.find((trackTmp) => trackTmp.id == trackTitle.track_id);
+      if (trackTitle.cover) {
+        track.cover = trackTitle.cover;
+      }
       track.title_fr = trackTitle.title_fr;
       track.title_es = trackTitle.title_es;
       track.title_en = trackTitle.title_en;
     });
   }
+
+  console.log(tracks);
 
   createTrackList();
 }
@@ -353,7 +403,7 @@ async function startTimerAndPlayTrack(trackId) {
   promises.push(loadTrack(trackId));
   jQuery.when.apply(jQuery, promises).then(function(data) {
     currentTrack = arguments[1];
-    jQuery("#trackContentPreload").html("<img src='" + currentTrack.album.cover_medium + "' />");
+    jQuery("#trackContentPreload").html("<img src='" + currentTrack.cover + "' />");
     playCurrentTrack();
   }, function(err) {
     console.log("[startTimerAndPlayTrack error]", err);
@@ -433,6 +483,7 @@ function refreshTrackProgressBar() {
 }
 
 function nextTrack() {
+  const found = currentTrackFound();
   playerAnsweringPosition = 0;
   playerBlockTimes = [0, 0, 0, 0];
   playerAttempts = [0, 0, 0, 0];
@@ -445,8 +496,7 @@ function nextTrack() {
   if (playedTracks.length < nbTracks) {
     playNextTrack();
   } else {
-    // TODO: timeout only if track not found
-    setTimeout("endGame()", 2000);
+    setTimeout("endGame()", found ? 0 : 2000);
   }
 }
 
@@ -467,7 +517,7 @@ function refreshTrackList() {
     if (track.playerTitleAnsweredPosition) {
       jQuery('#trackListTitleBullet' + track.id).addClass("playerAnswer" + track.playerTitleAnsweredPosition);
     }
-    if (track.playerArtistAnsweredPosition || (onlyTitleMode && track.playerTitleAnsweredPosition)) {
+    if (track.playerArtistAnsweredPosition || (filmMode && track.playerTitleAnsweredPosition)) {
       jQuery('#trackListArtistBullet' + track.id).addClass("playerAnswer" +
         (track.playerArtistAnsweredPosition ? track.playerArtistAnsweredPosition : track.playerTitleAnsweredPosition));
     }
@@ -491,9 +541,9 @@ function displayCurrentTrackContent() {
   currentTrack.played = true;
   const trackTitle = getTrackTitle(currentTrack);
   const trackArtists = getTrackArtists(currentTrack);
-  jQuery('.trackContentText').html(trackTitle + (onlyTitleMode ? "" : " (" + trackArtists.join(' / ') + ")") + "<br/>" +
+  jQuery('.trackContentText').html(trackTitle + (filmMode ? "" : " (" + trackArtists.join(' / ') + ")") + "<br/>" +
     (playlistIds.length > 1 && advancedMode ? "<span style='font-size: 0.5em'>Playlist " + currentTrack.playlistTitle + "</span>" : ""));
-  jQuery('.trackContentCover').css("background-image", "url('" + currentTrack.album.cover_medium + "')");
+  jQuery('.trackContentCover').css("background-image", "url('" + currentTrack.cover + "')");
   jQuery('#equalizerWrapper').hide();
   jQuery("#pauseIcon").css('visibility', 'hidden');
   jQuery('.trackContentIcon').removeClass('found').removeClass('animate__shakeY');
@@ -583,7 +633,7 @@ async function checkPlayerTextAnswer() {
     const answer = playerTextAnswer.val();
   
     const titleDistance = computeTitleScore(answer, currentTrack);
-    const artistDistance = onlyTitleMode ? 10 : computeArtistScore(answer, currentTrack);
+    const artistDistance = filmMode ? 10 : computeArtistScore(answer, currentTrack);
   
     const titleFound = (titleDistance <= LEVENSHTEIN_THRESHOLD);
     const artistFound = (artistDistance <= LEVENSHTEIN_THRESHOLD);
@@ -603,7 +653,7 @@ async function checkPlayerTextAnswer() {
 }
 
 function currentTrackFound() {
-  return currentTrack && currentTrack.playerTitleAnsweredPosition > 0 && (onlyTitleMode || currentTrack.playerArtistAnsweredPosition > 0);
+  return currentTrack && currentTrack.playerTitleAnsweredPosition > 0 && (filmMode || currentTrack.playerArtistAnsweredPosition > 0);
 }
 
 async function refreshPlayerAnsweringProgressBar() {
@@ -693,7 +743,7 @@ async function goodAnswer(title, artist) {
         currentTrack.playerTitleAnsweredTime = audio.currentTime;
         jQuery('.trackContentIconTitle').addClass('found').addClass('animate__shakeY');
       }
-      if (!onlyTitleMode && artist && currentTrack.playerArtistAnsweredPosition <= 0) {
+      if (!filmMode && artist && currentTrack.playerArtistAnsweredPosition <= 0) {
         currentTrack.playerArtistAnsweredPosition = playerAnsweringPosition;
         currentTrack.playerArtistAnsweredTime = audio.currentTime;
         jQuery('.trackContentIconArtist').addClass('found').addClass('animate__shakeY');
@@ -754,7 +804,7 @@ function createPlayerThumbnails() {
     getSortData: {
       name: '.playerThumbnailNumber',
       score: '.playerThumbnailScore parseInt',
-      time: '.playerThumbnailTime parseInt'
+      time: '.playerThumbnailTime parseFloat'
     }
   });
 }

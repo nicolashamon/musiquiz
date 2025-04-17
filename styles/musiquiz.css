@@ -124,10 +124,11 @@ a.button,button {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    min-width: 80%;
   
     .homeScreenStep {
       display: none;
-  
+
       &.current {
         display: block;
       }
@@ -137,6 +138,7 @@ a.button,button {
       }
 
       &#homeScreenStep1 #homeScreenStep1Bottom {
+        display: none;
         position: absolute;
         left: 20px;
         bottom: 20px;
@@ -447,7 +449,7 @@ a.button,button {
             background-color: #ffffff;
             background-repeat: no-repeat;
             background-position: center;
-            background-size: contain;
+            background-size: cover;
             border: 4px solid var(--musiquiz-main-blue-color);
             min-width: 200px;
             min-height: 200px;
@@ -736,72 +738,92 @@ a.button,button {
   }
 }
 
-#playlistList {
+.playlistList {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex-wrap: wrap;
   justify-content: flex-start;
-  align-items: center;
+  align-items: flex-start;
   overflow: auto;
 
-  .playlistListItem {
-    position: relative;
-    margin: 10px;
-    border: 4px solid var(--musiquiz-main-blue-color);
-    background-color: white;
-    border-radius: 10px;
+  .playlistGroupWrapper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    overflow: auto;
 
-    .playlistListItemPicture, .playlistListItemPicture > img {
-      border-radius: 4px;
+    .playlistGroupTitle {
+      min-width: 200px;
+      flex-basis: 100%;
+      font-size: 1.4em;
+      margin: 20px 0 10px 0;
+      padding-bottom: 6px;
+      border-bottom-width: 3px;
+      border-bottom-style: solid;
+      border-image: linear-gradient(to right, var(--musiquiz-main-blue-color), rgb(205, 211, 120)) 1;
     }
+  
+    .playlistListItem {
+      position: relative;
+      margin: 10px;
+      border: 4px solid var(--musiquiz-main-blue-color);
+      background-color: white;
+      border-radius: 10px;
+
+      .playlistListItemPicture, .playlistListItemPicture > img {
+        border-radius: 4px;
+      }
+      
+      .playlistListItemPicture > img {
+        margin: 4px;
+        width: 180px;
+        height: 180px;
+      }
     
-    .playlistListItemPicture > img {
-      margin: 4px;
-      width: 180px;
-      height: 180px;
-    }
-  
-    .playlistListItemTitleWrapper {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-  
-      .playlistListItemTitle {
-        background-color: rgba(0, 0, 0, 0.8);
-        color: #ffffff;
-        border-radius: 6px;
-        padding: 10px;
-        margin: 10px;
-        font-size: 1.2em;
-        transition: padding ease-in-out  0.25s;
-        -webkit-transition: padding ease-in-out  0.25s;
-        -moz-transition: padding ease-in-out  0.25s;
-        -ms-transition: padding ease-in-out  0.25s;
-        -o-transition: padding ease-in-out  0.25s;
-      }
-
-      &:hover .playlistListItemTitle {
-        padding: 20px;
-      }
-    }
-
-    &.selected {
       .playlistListItemTitleWrapper {
-        background-color: var(--musiquiz-background-color-overlay);
-
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    
         .playlistListItemTitle {
-          background-color: var(--musiquiz-main-blue-color-overlay);
+          background-color: rgba(0, 0, 0, 0.8);
+          color: #ffffff;
+          border-radius: 6px;
+          padding: 10px;
+          margin: 10px;
+          font-size: 1.2em;
+          transition: padding ease-in-out  0.25s;
+          -webkit-transition: padding ease-in-out  0.25s;
+          -moz-transition: padding ease-in-out  0.25s;
+          -ms-transition: padding ease-in-out  0.25s;
+          -o-transition: padding ease-in-out  0.25s;
+        }
+
+        &:hover .playlistListItemTitle {
           padding: 20px;
         }
       }
-    }
-  }  
+
+      &.selected {
+        .playlistListItemTitleWrapper {
+          background-color: var(--musiquiz-background-color-overlay);
+
+          .playlistListItemTitle {
+            background-color: var(--musiquiz-main-blue-color-overlay);
+            padding: 20px;
+          }
+        }
+      }
+    }  
+  }
 
   a:focus .playlistListItem {
     border-color: #00BCD4;
@@ -813,10 +835,11 @@ a.button,button {
   
   &.playing {
     color: green;
+    font-size: 1.3em;
   }
   
   &.played {
-    color: red;
+    color: lightslategray;
   }
 }
 
@@ -919,7 +942,7 @@ a.button,button {
 #keyboardHelp {
   position: absolute;
   top: 0;
-  right: 0;
+  right: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -964,21 +987,42 @@ a.button,button {
 #tracks-table {
   td {
     vertical-align: middle;
-    padding: 2px 4px;
+    padding: 1px 4px;
+
+    .playlist-title {
+      min-width: 200px;
+      flex-basis: 100%;
+      font-size: 1.8em;
+      margin: 50px 0 20px 0;
+      padding-bottom: 6px;
+      border-bottom-width: 3px;
+      border-bottom-style: solid;
+      border-image: linear-gradient(to right, var(--musiquiz-main-blue-color), rgb(205, 211, 120)) 1;
+    }
 
     .track-play {
       color: var(--musiquiz-main-blue-color);
     }
 
     .track-cover {
-      width: 40px;
-      height: 40px;
+      background-color: #ffffff;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
     }
 
     .track-updated {
       color: green;
       display: none;
     }
+  }
+
+  .imageForm {
+    position: absolute;
+    top: -1000px;
   }
 
   select {
